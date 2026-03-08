@@ -1,1 +1,4 @@
 /.lake
+doc/node_modules/
+doc/package.json
+doc/package-lock.json

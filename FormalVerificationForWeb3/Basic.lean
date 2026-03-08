@@ -7,10 +7,7 @@ import Mathlib.Tactic.Ring
 # Formal Verification for Web3
 
 Workshop code for Web3 Experts Brazil.
-
-**Authors:** Christiano Braga (UFF), Semar Augusto Martins (BAIF)
-
-This file contains all Lean 4 code from the workshop slides.
+All Lean 4 code from the workshop slides.
 Exercise solutions are provided as comments below each exercise.
 -/
 
@@ -34,6 +31,7 @@ theorem double_is_add_self (n : Nat) : double n = n + n := by
 -- Anatomy of a Lean Proof
 -- ---------------------------------------------------------------------------
 
+-- Primed to avoid clash with Mathlib's Nat.succ_pos
 theorem succ_pos' (n : Nat) : 0 < n + 1 := by
   exact Nat.succ_pos n
 
@@ -83,6 +81,7 @@ theorem identity_eq : ∀ (n : Nat), n = n := by
   intro n
   rfl
 
+-- Primed to avoid clash with Mathlib's imp_self
 theorem imp_self' (P : Prop) : P → P := by
   intro h
   exact h
@@ -91,6 +90,7 @@ theorem imp_self' (P : Prop) : P → P := by
 -- Tactic: exact and assumption
 -- ---------------------------------------------------------------------------
 
+-- Primed to avoid clash with Mathlib's And.intro
 theorem and_intro' (P Q : Prop) (hp : P) (hq : Q) : P ∧ Q := by
   exact ⟨hp, hq⟩
 
@@ -165,6 +165,7 @@ theorem and_comm_ex (P Q : Prop) : P ∧ Q → Q ∧ P := by
 --   exact ⟨h.2, h.1⟩
 
 -- 1b. Transitivity of implication
+-- Primed to avoid clash with Mathlib's imp_trans
 theorem imp_trans' (P Q R : Prop) :
     (P → Q) → (Q → R) → P → R := by
   sorry
@@ -349,7 +350,7 @@ theorem dh_shared_secret_agree (params : DHParams)
     let bob_pub   := params.g ^ b
     dh_shared_secret params a bob_pub =
     dh_shared_secret params b alice_pub := by
-  simp [dh_shared_secret]
+  simp only [dh_shared_secret]
   -- Goal: (g ^ b) ^ a = (g ^ a) ^ b
   rw [← pow_mul, ← pow_mul]
   -- Goal: g ^ (b * a) = g ^ (a * b)

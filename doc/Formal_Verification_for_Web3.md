@@ -49,9 +49,6 @@ style: |
 
 **Web3 Experts Brazil**
 
-Christiano Braga &mdash; Universidade Federal Fluminense
-Semar Augusto Martins &mdash; Beneficial AI Foundation
-
 ---
 
 # About This Workshop
@@ -128,62 +125,6 @@ Cyfrin, "[Euler Finance Hack Analysis](https://www.cyfrin.io/blog/how-did-the-eu
 
 ---
 
-# Max Tegmark
-
-**MIT Physics, Founder of Beneficial AI Foundation (BAIF)**
-
-- Author of *Life 3.0: Being Human in the Age of Artificial Intelligence* (2017)
-- Co-author of "Provably Safe Systems: The Only Path to Controllable AGI" (2023)
-- Co-author of "Towards Guaranteed Safe AI" (2024) &mdash; a framework requiring AI systems to provide **mathematical proofs of safety** before each action
-
-> "If we build AI systems that are provably safe, we can verify compliance even for superintelligent AI."
-
-<div class="ref">
-
-Tegmark, M. and Omohundro, S., "[Provably safe systems: the only path to controllable AGI](https://arxiv.org/abs/2309.01933)," arXiv:2309.01933, 2023.
-Dalrymple, D. et al., "[Towards Guaranteed Safe AI](https://arxiv.org/abs/2405.06624)," arXiv:2405.06624, 2024.
-
-</div>
-
----
-
-# Leonardo de Moura
-
-**AWS / Lean FRO, Creator of Lean and Z3**
-
-- Built Lean to scale formal mathematics and software verification
-- Z3: the world's most widely used SMT solver
-- 2025 ACM SIGPLAN Programming Languages Software Award (for Lean)
-
-> "As AI writes most of the world's software, formal mathematical verification &mdash; not traditional testing &mdash; will become essential. Verification proves software behaves correctly for **all possible inputs**."
-
-<div class="ref">
-
-De Moura, L. and Ullrich, S., "[The Lean 4 Theorem Prover and Programming Language](https://lean-lang.org/papers/lean4.pdf)," CADE-28, 2021.
-[ACM SIGPLAN Programming Languages Software Award, 2025](https://www.sigplan.org/Awards/Software/).
-
-</div>
-
----
-
-# Shaowei Lin
-
-**Chief Scientist, Beneficial AI Foundation (BAIF)**
-
-- Mathematician working on statistical learning theory, spiking neural networks, and dependent type theories for machine reasoning
-- Lead author of the **Vericoding Benchmark**: 12,504 formal specifications (7,141 in Lean, 3,029 in Dafny, 2,334 in Verus/Rust) for testing LLM-generated verified code
-- Collaborates with Atlas Computing and Topos Institute on AI-assisted formal verification at scale
-
-> Advocates "correct-by-construction" code generation rather than token-by-token synthesis.
-
-<div class="ref">
-
-Bursuc, S. et al., "[A benchmark for vericoding: formally verified program synthesis](https://arxiv.org/abs/2509.22908)," arXiv:2509.22908, 2025.
-
-</div>
-
----
-
 # Why Formal Verification for Web3?
 
 | Property | Testing | Formal Verification |
@@ -203,12 +144,16 @@ Runtime Verification, "[Formal Verification 101 for Blockchain Systems and Smart
 
 ---
 
-# The Lean 4 Ecosystem
+# Why Lean 4?
 
-- **Lean 4** &mdash; programming language + theorem prover (de Moura & Ullrich, AWS/Lean FRO)
-- **Mathlib** &mdash; massive mathematical library (300k+ theorems)
-- General-purpose functional programming language
-- Compiles to C &mdash; production-ready performance
+Lean 4 uniquely combines **programming** and **proving** in one language &mdash; code and its correctness proof live side by side, checked by the same compiler.
+
+- **Dependent types** &mdash; types can depend on values, so invariants (e.g., "this key has 256 bits") are enforced at compile time
+- **Mathlib** &mdash; 300k+ formally verified theorems, including the number theory and algebra our proofs need
+- **General-purpose** &mdash; compiles to C with production-ready performance
+- **AI integration** &mdash; LLMs are already being trained to generate Lean proofs (e.g., Google DeepMind's AlphaProof). Lean is both the language AI writes proofs in *and* the tool that checks them
+
+> AI proposes, Lean verifies.
 
 <div class="ref">
 
@@ -285,7 +230,8 @@ Key idea: **propositions are types, proofs are programs** (Curry-Howard correspo
 # Anatomy of a Lean Proof
 
 ```lean
-theorem succ_pos (n : Nat) : 0 < n + 1 := by
+-- The prime (') avoids clashing with Mathlib names
+theorem succ_pos' (n : Nat) : 0 < n + 1 := by
 --       ^name     ^params   ^statement      ^tactic block
   exact Nat.succ_pos n
 --^tactic (one step of the proof)
@@ -309,7 +255,7 @@ theorem succ_pos (n : Nat) : 0 < n + 1 := by
 | $P \land Q$ | `P × Q` (product) |
 | $P \lor Q$ | `P ⊕ Q` (sum) |
 | $P \to Q$ | `P → Q` (function) |
-| $\forall x, P(x)$ | `(x : α) → P x` |
+| $\forall x, P(x)$ | `(x : α) → P x` (dependent function) |
 | $\exists x, P(x)$ | `⟨x, proof⟩` (Sigma type) |
 | True | `True` (unit) |
 | False | `False` (empty) |
@@ -353,15 +299,17 @@ abbrev MyType := Nat      -- type alias (abbrev is transparent)
 
 **Key notation** used throughout this workshop:
 
+<div class="small">
+
 | Syntax | Meaning |
 |---|---|
 | `⟨a, b⟩` | Anonymous constructor &mdash; build a struct or existential witness |
 | `h.1` / `h.2` | First / second projection (e.g., left / right of `∧`) |
 | `x.field` | Structure field access: `params.e`, `m.val` |
 | `· + ·` | Anonymous function: `fun a b => a + b` |
-| `let x := e` | Local definition inside a proof or program |
 | `tac1; tac2` | Tactic chaining &mdash; run `tac1` then `tac2` on same line |
-| `_` in `calc` | Stands for the previous expression in a `calc` chain |
+
+</div>
 
 ---
 
@@ -411,12 +359,12 @@ theorem identity_eq : ∀ (n : Nat), n = n := by
   intro n   -- now n : Nat is in context, goal is n = n
   rfl
 
-theorem imp_self (P : Prop) : P → P := by
+theorem imp_self' (P : Prop) : P → P := by
   intro h   -- assume P holds as hypothesis h
   exact h
 ```
 
-[Try in Lean 4 Web](https://live.lean-lang.org/#code=theorem%20identity_eq%20%3A%20%E2%88%80%20%28n%20%3A%20Nat%29%2C%20n%20%3D%20n%20%3A%3D%20by%0A%20%20intro%20n%0A%20%20rfl%0A%0Atheorem%20imp_self%20%28P%20%3A%20Prop%29%20%3A%20P%20%E2%86%92%20P%20%3A%3D%20by%0A%20%20intro%20h%0A%20%20exact%20h)
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=theorem%20identity_eq%20%3A%20%E2%88%80%20%28n%20%3A%20Nat%29%2C%20n%20%3D%20n%20%3A%3D%20by%0A%20%20intro%20n%0A%20%20rfl%0A%0Atheorem%20imp_self'%20%28P%20%3A%20Prop%29%20%3A%20P%20%E2%86%92%20P%20%3A%3D%20by%0A%20%20intro%20h%0A%20%20exact%20h)
 
 ---
 
@@ -426,7 +374,7 @@ theorem imp_self (P : Prop) : P → P := by
 
 ```lean
 -- exact: provide the precise proof term
-theorem and_intro (P Q : Prop) (hp : P) (hq : Q) : P ∧ Q := by
+theorem and_intro' (P Q : Prop) (hp : P) (hq : Q) : P ∧ Q := by
   exact ⟨hp, hq⟩
 
 -- assumption: let Lean search the context for you
@@ -491,7 +439,7 @@ theorem ring_demo2 (x : Int) :
   ring
 ```
 
-*Requires Mathlib &mdash; `ring`, `ring_nf`, and `linarith` are Mathlib tactics, not built into core Lean 4.*
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Tactic.Ring%0A%0Atheorem%20ring_demo1%20%28a%20b%20%3A%20Nat%29%20%3A%0A%20%20%20%20%28a%20%2B%20b%29%20%2A%20%28a%20%2B%20b%29%20%3D%20a%2Aa%20%2B%202%2Aa%2Ab%20%2B%20b%2Ab%20%3A%3D%20by%0A%20%20ring%0A%0Atheorem%20ring_demo2%20%28x%20%3A%20Int%29%20%3A%0A%20%20%20%20%28x%20%2B%201%29%20%2A%20%28x%20-%201%29%20%3D%20x%5E2%20-%201%20%3A%3D%20by%0A%20%20ring)
 
 ---
 
@@ -518,12 +466,26 @@ theorem have_demo (a b c : Nat)
 
 These appear frequently in Part 2's cryptographic proofs:
 
+<div class="small">
+
 | Tactic | Purpose | Example use |
 |---|---|---|
 | `unfold f` | Expand definition `f` in the goal | `unfold otp_encrypt` |
 | `rw [h]` | Rewrite using `h : a = b` (left to right) | `rw [pow_mul]` |
 | `rw [← h]` | Rewrite in reverse direction | `rw [← add_assoc]` |
 | `ext i` | Prove equality component-wise | Two `Vector`s equal element-wise |
+
+</div>
+
+```lean
+def double' (n : Nat) : Nat := 2 * n
+theorem double_eq (n : Nat) : double' n = 2 * n := by
+  unfold double'  -- goal becomes 2 * n = 2 * n
+theorem rw_demo (a b : Nat) (h : a = b) : a + 1 = b + 1 := by
+  rw [h]          -- replaces a with b
+```
+
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=--%20unfold%20expands%20a%20definition%0Adef%20double%20%28n%20%3A%20Nat%29%20%3A%20Nat%20%3A%3D%202%20%2A%20n%0A%0Atheorem%20double_eq%20%28n%20%3A%20Nat%29%20%3A%20double%20n%20%3D%202%20%2A%20n%20%3A%3D%20by%0A%20%20unfold%20double%20%20--%20goal%20becomes%202%20%2A%20n%20%3D%202%20%2A%20n%0A%0A--%20rw%20rewrites%20using%20an%20equality%0Atheorem%20rw_demo%20%28a%20b%20%3A%20Nat%29%20%28h%20%3A%20a%20%3D%20b%29%20%3A%20a%20%2B%201%20%3D%20b%20%2B%201%20%3A%3D%20by%0A%20%20rw%20%5Bh%5D%20%20%20%20%20%20%20%20%20--%20replaces%20a%20with%20b)
 
 ---
 
@@ -580,7 +542,7 @@ theorem and_comm_ex (P Q : Prop) : P ∧ Q → Q ∧ P := by
   sorry
 
 -- 1b. Transitivity of implication
-theorem imp_trans (P Q R : Prop) :
+theorem imp_trans' (P Q R : Prop) :
     (P → Q) → (Q → R) → P → R := by
   sorry
 
@@ -593,7 +555,7 @@ theorem exercise_arith (n : Nat) : n + n = 2 * n := by
 
 </div>
 
-[Try in Lean 4 Web](https://live.lean-lang.org/#code=--%201a.%20Commutativity%20of%20%E2%88%A7%0Atheorem%20and_comm_ex%20%28P%20Q%20%3A%20Prop%29%20%3A%20P%20%E2%88%A7%20Q%20%E2%86%92%20Q%20%E2%88%A7%20P%20%3A%3D%20by%0A%20%20sorry%0A%0A--%201b.%20Transitivity%20of%20implication%0Atheorem%20imp_trans%20%28P%20Q%20R%20%3A%20Prop%29%20%3A%20%28P%20%E2%86%92%20Q%29%20%E2%86%92%20%28Q%20%E2%86%92%20R%29%20%E2%86%92%20P%20%E2%86%92%20R%20%3A%3D%20by%0A%20%20sorry%0A%0A--%201c.%20A%20simple%20arithmetic%20fact%0Atheorem%20exercise_arith%20%28n%20%3A%20Nat%29%20%3A%20n%20%2B%20n%20%3D%202%20%2A%20n%20%3A%3D%20by%0A%20%20sorry)
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=--%201a.%20Commutativity%20of%20%E2%88%A7%0Atheorem%20and_comm_ex%20%28P%20Q%20%3A%20Prop%29%20%3A%20P%20%E2%88%A7%20Q%20%E2%86%92%20Q%20%E2%88%A7%20P%20%3A%3D%20by%0A%20%20sorry%0A%0A--%201b.%20Transitivity%20of%20implication%0Atheorem%20imp_trans'%20%28P%20Q%20R%20%3A%20Prop%29%20%3A%20%28P%20%E2%86%92%20Q%29%20%E2%86%92%20%28Q%20%E2%86%92%20R%29%20%E2%86%92%20P%20%E2%86%92%20R%20%3A%3D%20by%0A%20%20sorry%0A%0A--%201c.%20A%20simple%20arithmetic%20fact%0Atheorem%20exercise_arith%20%28n%20%3A%20Nat%29%20%3A%20n%20%2B%20n%20%3D%202%20%2A%20n%20%3A%3D%20by%0A%20%20sorry)
 
 ---
 
@@ -606,7 +568,7 @@ theorem and_comm_ex (P Q : Prop) : P ∧ Q → Q ∧ P := by
   exact ⟨h.2, h.1⟩
 
 -- 1b
-theorem imp_trans (P Q R : Prop) :
+theorem imp_trans' (P Q R : Prop) :
     (P → Q) → (Q → R) → P → R := by
   intro hpq hqr hp
   exact hqr (hpq hp)
@@ -720,7 +682,7 @@ def otp_decrypt (key cipher : Vector Bit n) : Vector Bit n :=
   Vector.zipWith (· + ·) key cipher
 ```
 
-*Requires Mathlib &mdash; [set up locally](https://leanprover-community.github.io/get_started.html) or use [Gitpod](https://gitpod.io/#/https://github.com/leanprover-community/mathlib4).*
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Data.Vector.Basic%0A%0Aabbrev%20Bit%20%3A%3D%20ZMod%202%0A%0Adef%20otp_encrypt%20%28key%20msg%20%3A%20Vector%20Bit%20n%29%20%3A%20Vector%20Bit%20n%20%3A%3D%0A%20%20Vector.zipWith%20%28%C2%B7%20%2B%20%C2%B7%29%20key%20msg%0A%0Adef%20otp_decrypt%20%28key%20cipher%20%3A%20Vector%20Bit%20n%29%20%3A%20Vector%20Bit%20n%20%3A%3D%0A%20%20Vector.zipWith%20%28%C2%B7%20%2B%20%C2%B7%29%20key%20cipher)
 
 ---
 
@@ -743,7 +705,7 @@ theorem otp_correct (key msg : Vector Bit n) :
   rw [← add_assoc, zmod2_self_add, zero_add]
 ```
 
-*Requires Mathlib &mdash; [set up locally](https://leanprover-community.github.io/get_started.html).*
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Data.Vector.Basic%0A%0Aabbrev%20Bit%20%3A%3D%20ZMod%202%0A%0Adef%20otp_encrypt%20%28key%20msg%20%3A%20Vector%20Bit%20n%29%20%3A%20Vector%20Bit%20n%20%3A%3D%0A%20%20Vector.zipWith%20%28%C2%B7%20%2B%20%C2%B7%29%20key%20msg%0A%0Adef%20otp_decrypt%20%28key%20cipher%20%3A%20Vector%20Bit%20n%29%20%3A%20Vector%20Bit%20n%20%3A%3D%0A%20%20Vector.zipWith%20%28%C2%B7%20%2B%20%C2%B7%29%20key%20cipher%0A%0Atheorem%20zmod2_self_add%20%3A%20%E2%88%80%20%28a%20%3A%20ZMod%202%29%2C%20a%20%2B%20a%20%3D%200%20%3A%3D%20by%20decide%0A%0Atheorem%20otp_correct%20%28key%20msg%20%3A%20Vector%20Bit%20n%29%20%3A%0A%20%20%20%20otp_decrypt%20key%20%28otp_encrypt%20key%20msg%29%20%3D%20msg%20%3A%3D%20by%0A%20%20unfold%20otp_encrypt%20otp_decrypt%0A%20%20ext%20i%0A%20%20simp%20%5BVector.zipWith%5D%0A%20%20rw%20%5B%E2%86%90%20add_assoc%2C%20zmod2_self_add%2C%20zero_add%5D)
 
 ---
 
@@ -762,7 +724,7 @@ theorem otp_comm (a b : Vector Bit n) :
   simp [Vector.zipWith]; ring
 ```
 
-*Requires Mathlib &mdash; [set up locally](https://leanprover-community.github.io/get_started.html).*
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Data.Vector.Basic%0Aimport%20Mathlib.Tactic.Ring%0A%0Aabbrev%20Bit%20%3A%3D%20ZMod%202%0A%0Adef%20otp_encrypt%20%28key%20msg%20%3A%20Vector%20Bit%20n%29%20%3A%20Vector%20Bit%20n%20%3A%3D%0A%20%20Vector.zipWith%20%28%C2%B7%20%2B%20%C2%B7%29%20key%20msg%0A%0Adef%20otp_decrypt%20%28key%20cipher%20%3A%20Vector%20Bit%20n%29%20%3A%20Vector%20Bit%20n%20%3A%3D%0A%20%20Vector.zipWith%20%28%C2%B7%20%2B%20%C2%B7%29%20key%20cipher%0A%0Atheorem%20zmod2_self_add%20%3A%20%E2%88%80%20%28a%20%3A%20ZMod%202%29%2C%20a%20%2B%20a%20%3D%200%20%3A%3D%20by%20decide%0A%0Atheorem%20otp_correct%20%28key%20msg%20%3A%20Vector%20Bit%20n%29%20%3A%0A%20%20%20%20otp_decrypt%20key%20%28otp_encrypt%20key%20msg%29%20%3D%20msg%20%3A%3D%20by%0A%20%20unfold%20otp_encrypt%20otp_decrypt%3B%20ext%20i%0A%20%20simp%20%5BVector.zipWith%5D%0A%20%20rw%20%5B%E2%86%90%20add_assoc%2C%20zmod2_self_add%2C%20zero_add%5D%0A%0Atheorem%20otp_involutory%20%28key%20msg%20%3A%20Vector%20Bit%20n%29%20%3A%0A%20%20%20%20otp_encrypt%20key%20%28otp_encrypt%20key%20msg%29%20%3D%20msg%20%3A%3D%0A%20%20otp_correct%20key%20msg%0A%0Atheorem%20otp_comm%20%28a%20b%20%3A%20Vector%20Bit%20n%29%20%3A%0A%20%20%20%20otp_encrypt%20a%20b%20%3D%20otp_encrypt%20b%20a%20%3A%3D%20by%0A%20%20unfold%20otp_encrypt%3B%20ext%20i%0A%20%20simp%20%5BVector.zipWith%5D%3B%20ring)
 
 ---
 
@@ -788,6 +750,8 @@ theorem otp_self_encrypt (msg : Vector Bit n) :
 
 </div>
 
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Data.Vector.Basic%0Aimport%20Mathlib.Tactic.Ring%0A%0Aabbrev%20Bit%20%3A%3D%20ZMod%202%0A%0Adef%20otp_encrypt%20%28key%20msg%20%3A%20Vector%20Bit%20n%29%20%3A%20Vector%20Bit%20n%20%3A%3D%0A%20%20Vector.zipWith%20%28%C2%B7%20%2B%20%C2%B7%29%20key%20msg%0A%0Atheorem%20zmod2_self_add%20%3A%20%E2%88%80%20%28a%20%3A%20ZMod%202%29%2C%20a%20%2B%20a%20%3D%200%20%3A%3D%20by%20decide%0A%0A--%203a.%20Encrypting%20with%20the%20zero%20key%20is%20identity%0Atheorem%20otp_zero_key%20%28msg%20%3A%20Vector%20Bit%20n%29%20%3A%0A%20%20%20%20otp_encrypt%20%28Vector.replicate%20n%20%280%20%3A%20Bit%29%29%20msg%0A%20%20%20%20%3D%20msg%20%3A%3D%20by%0A%20%20sorry%0A%0A--%203b.%20Encrypting%20a%20message%20with%20itself%20yields%20zeros%0Atheorem%20otp_self_encrypt%20%28msg%20%3A%20Vector%20Bit%20n%29%20%3A%0A%20%20%20%20otp_encrypt%20msg%20msg%0A%20%20%20%20%3D%20Vector.replicate%20n%20%280%20%3A%20Bit%29%20%3A%3D%20by%0A%20%20sorry)
+
 ---
 
 # Solution 3
@@ -809,7 +773,7 @@ theorem otp_self_encrypt (msg : Vector Bit n) :
   exact zmod2_self_add (msg.get i)
 ```
 
-*Requires Mathlib &mdash; [set up locally](https://leanprover-community.github.io/get_started.html).*
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Data.Vector.Basic%0A%0Aabbrev%20Bit%20%3A%3D%20ZMod%202%0A%0Adef%20otp_encrypt%20%28key%20msg%20%3A%20Vector%20Bit%20n%29%20%3A%20Vector%20Bit%20n%20%3A%3D%0A%20%20Vector.zipWith%20%28%C2%B7%20%2B%20%C2%B7%29%20key%20msg%0A%0Atheorem%20zmod2_self_add%20%3A%20%E2%88%80%20%28a%20%3A%20ZMod%202%29%2C%20a%20%2B%20a%20%3D%200%20%3A%3D%20by%20decide%0A%0Atheorem%20otp_zero_key%20%28msg%20%3A%20Vector%20Bit%20n%29%20%3A%0A%20%20%20%20otp_encrypt%20%28Vector.replicate%20n%20%280%20%3A%20Bit%29%29%20msg%20%3D%20msg%20%3A%3D%20by%0A%20%20unfold%20otp_encrypt%3B%20ext%20i%0A%20%20simp%20%5BVector.zipWith%2C%20Vector.replicate%5D%0A%0Atheorem%20otp_self_encrypt%20%28msg%20%3A%20Vector%20Bit%20n%29%20%3A%0A%20%20%20%20otp_encrypt%20msg%20msg%20%3D%20Vector.replicate%20n%20%280%20%3A%20Bit%29%20%3A%3D%20by%0A%20%20unfold%20otp_encrypt%3B%20ext%20i%0A%20%20simp%20%5BVector.zipWith%5D%0A%20%20exact%20zmod2_self_add%20%28msg.get%20i%29)
 
 ---
 
@@ -817,7 +781,7 @@ theorem otp_self_encrypt (msg : Vector Bit n) :
 
 **Setup:**
 - Choose primes $p$, $q$; compute $n = p \cdot q$
-- Choose $e$ coprime to $\phi(n) = (p-1)(q-1)$
+- Choose $e$ **coprime** to $\phi(n) = (p-1)(q-1)$ &mdash; i.e., $\gcd(e, \phi(n)) = 1$, so that $e$ has a multiplicative inverse mod $\phi(n)$
 - Compute $d = e^{-1} \mod \phi(n)$
 
 **Operations:**
@@ -851,6 +815,8 @@ def rsa_decrypt (params : RSAParams) (c : ZMod params.n) :=
   c ^ params.d
 ```
 
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Data.Nat.Prime.Basic%0A%0Astructure%20RSAParams%20where%0A%20%20p%20%3A%20Nat%0A%20%20q%20%3A%20Nat%0A%20%20hp%20%3A%20Nat.Prime%20p%0A%20%20hq%20%3A%20Nat.Prime%20q%0A%20%20hpq%20%3A%20p%20%E2%89%A0%20q%0A%20%20e%20%3A%20Nat%0A%20%20d%20%3A%20Nat%0A%20%20he_pos%20%3A%200%20%3C%20e%0A%20%20n%20%3A%20Nat%20%3A%3D%20p%20%2A%20q%0A%20%20phi%20%3A%20Nat%20%3A%3D%20%28p%20-%201%29%20%2A%20%28q%20-%201%29%0A%20%20he%20%3A%20Nat.Coprime%20e%20phi%0A%20%20hed%20%3A%20e%20%2A%20d%20%25%20phi%20%3D%201%0A%0Adef%20rsa_encrypt%20%28params%20%3A%20RSAParams%29%20%28m%20%3A%20ZMod%20params.n%29%20%3A%3D%0A%20%20m%20%5E%20params.e%0Adef%20rsa_decrypt%20%28params%20%3A%20RSAParams%29%20%28c%20%3A%20ZMod%20params.n%29%20%3A%3D%0A%20%20c%20%5E%20params.d)
+
 ---
 
 # RSA: Correctness Statement
@@ -869,8 +835,17 @@ theorem rsa_correct (params : RSAParams)
   sorry -- requires Euler's theorem from Mathlib
 ```
 
-The `sorry` is intentional &mdash; the full proof chains through `ZMod.pow_totient` in Mathlib.
-Note: `hm` assumes $\gcd(m,n)=1$. The general case ($\forall m$) follows from CRT but requires a longer proof.
+The `sorry` is intentional &mdash; completing this proof requires Euler's theorem, which is available in Mathlib as `ZMod.pow_totient`.
+
+---
+
+# RSA: Why `sorry` and What Is CRT?
+
+**Euler's theorem** states that $m^{\phi(n)} \equiv 1 \pmod{n}$ when $\gcd(m, n) = 1$. In Mathlib, this is `ZMod.pow_totient`: for coprime $m$ and $n$, raising $m$ to Euler's totient $\phi(n)$ gives $1$ in `ZMod n`. Chaining this with $e \cdot d \equiv 1 \pmod{\phi(n)}$ proves $m^{ed} = m$.
+
+**The `hm` hypothesis** requires $\gcd(m, n) = 1$ (i.e., the message is coprime to $n$). This excludes messages that are multiples of $p$ or $q$ &mdash; extremely unlikely in practice since $p$ and $q$ are large primes.
+
+**CRT (Chinese Remainder Theorem):** For $n = p \cdot q$, CRT gives an isomorphism $\mathbb{Z}_n \cong \mathbb{Z}_p \times \mathbb{Z}_q$. This allows proving $m^{ed} = m$ for **all** $m$ (including non-coprime ones) by checking the identity modulo $p$ and modulo $q$ separately. This is a longer proof that we omit here.
 
 ---
 
@@ -892,7 +867,7 @@ theorem rsa_commute (params : RSAParams)
   rw [← pow_mul, ← pow_mul]; ring_nf
 ```
 
-*Requires Mathlib &mdash; [set up locally](https://leanprover-community.github.io/get_started.html).*
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Data.Nat.Prime.Basic%0Aimport%20Mathlib.Tactic.Ring%0A%0Astructure%20RSAParams%20where%0A%20%20p%20%3A%20Nat%0A%20%20q%20%3A%20Nat%0A%20%20hp%20%3A%20Nat.Prime%20p%0A%20%20hq%20%3A%20Nat.Prime%20q%0A%20%20hpq%20%3A%20p%20%E2%89%A0%20q%0A%20%20e%20%3A%20Nat%0A%20%20d%20%3A%20Nat%0A%20%20he_pos%20%3A%200%20%3C%20e%0A%20%20n%20%3A%20Nat%20%3A%3D%20p%20%2A%20q%0A%20%20phi%20%3A%20Nat%20%3A%3D%20%28p%20-%201%29%20%2A%20%28q%20-%201%29%0A%20%20he%20%3A%20Nat.Coprime%20e%20phi%0A%20%20hed%20%3A%20e%20%2A%20d%20%25%20phi%20%3D%201%0A%0Adef%20rsa_encrypt%20%28params%20%3A%20RSAParams%29%20%28m%20%3A%20ZMod%20params.n%29%20%3A%3D%0A%20%20m%20%5E%20params.e%0A%0Atheorem%20rsa_homomorphic%20%28params%20%3A%20RSAParams%29%0A%20%20%20%20%28m1%20m2%20%3A%20ZMod%20params.n%29%20%3A%0A%20%20%20%20rsa_encrypt%20params%20m1%20%2A%20rsa_encrypt%20params%20m2%0A%20%20%20%20%3D%20rsa_encrypt%20params%20%28m1%20%2A%20m2%29%20%3A%3D%20by%0A%20%20unfold%20rsa_encrypt%3B%20rw%20%5B%E2%86%90%20mul_pow%5D%0A%0Atheorem%20rsa_commute%20%28params%20%3A%20RSAParams%29%0A%20%20%20%20%28m%20%3A%20ZMod%20params.n%29%20%3A%0A%20%20%20%20%28m%20%5E%20params.e%29%20%5E%20params.d%0A%20%20%20%20%3D%20%28m%20%5E%20params.d%29%20%5E%20params.e%20%3A%3D%20by%0A%20%20rw%20%5B%E2%86%90%20pow_mul%2C%20%E2%86%90%20pow_mul%5D%3B%20ring_nf)
 
 ---
 
@@ -916,6 +891,8 @@ theorem rsa_zero (params : RSAParams) :
 
 </div>
 
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Data.Nat.Prime.Basic%0Aimport%20Mathlib.Tactic.Ring%0A%0Astructure%20RSAParams%20where%0A%20%20p%20%3A%20Nat%0A%20%20q%20%3A%20Nat%0A%20%20hp%20%3A%20Nat.Prime%20p%0A%20%20hq%20%3A%20Nat.Prime%20q%0A%20%20hpq%20%3A%20p%20%E2%89%A0%20q%0A%20%20e%20%3A%20Nat%0A%20%20d%20%3A%20Nat%0A%20%20he_pos%20%3A%200%20%3C%20e%0A%20%20n%20%3A%20Nat%20%3A%3D%20p%20%2A%20q%0A%20%20phi%20%3A%20Nat%20%3A%3D%20%28p%20-%201%29%20%2A%20%28q%20-%201%29%0A%20%20he%20%3A%20Nat.Coprime%20e%20phi%0A%20%20hed%20%3A%20e%20%2A%20d%20%25%20phi%20%3D%201%0A%0Adef%20rsa_encrypt%20%28params%20%3A%20RSAParams%29%20%28m%20%3A%20ZMod%20params.n%29%20%3A%3D%0A%20%20m%20%5E%20params.e%0A%0A--%204a.%20Encrypting%201%20always%20gives%201%0Atheorem%20rsa_one%20%28params%20%3A%20RSAParams%29%20%3A%0A%20%20%20%20rsa_encrypt%20params%20%281%20%3A%20ZMod%20params.n%29%20%3D%201%20%3A%3D%20by%0A%20%20sorry%0A%0A--%204b.%20Encrypting%200%20always%20gives%200%0Atheorem%20rsa_zero%20%28params%20%3A%20RSAParams%29%20%3A%0A%20%20%20%20rsa_encrypt%20params%20%280%20%3A%20ZMod%20params.n%29%20%3D%200%20%3A%3D%20by%0A%20%20sorry)
+
 ---
 
 # Solution 4
@@ -934,7 +911,7 @@ theorem rsa_zero (params : RSAParams) :
   exact zero_pow params.he_pos.ne'
 ```
 
-*Requires Mathlib &mdash; [set up locally](https://leanprover-community.github.io/get_started.html).*
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Data.Nat.Prime.Basic%0Aimport%20Mathlib.Tactic.Ring%0A%0Astructure%20RSAParams%20where%0A%20%20p%20%3A%20Nat%0A%20%20q%20%3A%20Nat%0A%20%20hp%20%3A%20Nat.Prime%20p%0A%20%20hq%20%3A%20Nat.Prime%20q%0A%20%20hpq%20%3A%20p%20%E2%89%A0%20q%0A%20%20e%20%3A%20Nat%0A%20%20d%20%3A%20Nat%0A%20%20he_pos%20%3A%200%20%3C%20e%0A%20%20n%20%3A%20Nat%20%3A%3D%20p%20%2A%20q%0A%20%20phi%20%3A%20Nat%20%3A%3D%20%28p%20-%201%29%20%2A%20%28q%20-%201%29%0A%20%20he%20%3A%20Nat.Coprime%20e%20phi%0A%20%20hed%20%3A%20e%20%2A%20d%20%25%20phi%20%3D%201%0A%0Adef%20rsa_encrypt%20%28params%20%3A%20RSAParams%29%20%28m%20%3A%20ZMod%20params.n%29%20%3A%3D%0A%20%20m%20%5E%20params.e%0A%0Atheorem%20rsa_one%20%28params%20%3A%20RSAParams%29%20%3A%0A%20%20%20%20rsa_encrypt%20params%20%281%20%3A%20ZMod%20params.n%29%20%3D%201%20%3A%3D%20by%0A%20%20unfold%20rsa_encrypt%0A%20%20exact%20one_pow%20params.e%0A%0Atheorem%20rsa_zero%20%28params%20%3A%20RSAParams%29%20%3A%0A%20%20%20%20rsa_encrypt%20params%20%280%20%3A%20ZMod%20params.n%29%20%3D%200%20%3A%3D%20by%0A%20%20unfold%20rsa_encrypt%0A%20%20exact%20zero_pow%20params.he_pos.ne%27)
 
 ---
 
@@ -976,7 +953,7 @@ def dh_shared_secret (params : DHParams)
   their_public ^ my_secret
 ```
 
-*Requires Mathlib &mdash; [set up locally](https://leanprover-community.github.io/get_started.html).*
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Tactic.Ring%0A%0Astructure%20DHParams%20where%0A%20%20p%20%3A%20Nat%0A%20%20hp%20%3A%20Nat.Prime%20p%0A%20%20g%20%3A%20ZMod%20p%0A%0Astructure%20DHKeyPair%20%28params%20%3A%20DHParams%29%20where%0A%20%20secret%20%3A%20Nat%0A%20%20public_key%20%3A%20ZMod%20params.p%20%3A%3D%20params.g%20%5E%20secret%0A%0Adef%20dh_shared_secret%20%28params%20%3A%20DHParams%29%0A%20%20%20%20%28my_secret%20%3A%20Nat%29%20%28their_public%20%3A%20ZMod%20params.p%29%0A%20%20%20%20%3A%20ZMod%20params.p%20%3A%3D%0A%20%20their_public%20%5E%20my_secret)
 
 ---
 
@@ -990,7 +967,7 @@ theorem dh_shared_secret_agree (params : DHParams)
     let bob_pub   := params.g ^ b
     dh_shared_secret params a bob_pub =
     dh_shared_secret params b alice_pub := by
-  simp [dh_shared_secret]
+  simp only [dh_shared_secret]
   -- Goal: (g ^ b) ^ a = (g ^ a) ^ b
   rw [← pow_mul, ← pow_mul]
   -- Goal: g ^ (b * a) = g ^ (a * b)
@@ -999,7 +976,15 @@ theorem dh_shared_secret_agree (params : DHParams)
 
 The proof hinges on a single algebraic fact: multiplication of natural numbers is commutative ($b \cdot a = a \cdot b$), so $g^{ba} = g^{ab}$. This is why both parties end up with the same shared secret.
 
-Note: We work in `ZMod p` (all residues mod $p$) rather than $\mathbb{Z}_p^*$ (the multiplicative group of units). This is a simplification &mdash; the real protocol requires $g$ to be a generator of $\mathbb{Z}_p^*$. However, the exponent identity $(g^b)^a = g^{ba}$ holds in any monoid, so our algebraic correctness proof is valid regardless.
+---
+
+# DH: A Note on Our Model
+
+We work in `ZMod p` &mdash; the ring of **all** residues modulo $p$ &mdash; rather than $\mathbb{Z}_p^*$, the multiplicative group of units (non-zero elements with multiplicative inverses).
+
+In the real Diffie-Hellman protocol, $g$ must be a **generator** of $\mathbb{Z}_p^*$, meaning every non-zero element can be written as $g^k$ for some $k$. This is essential for security: if $g$ generates only a small subgroup, an attacker can brute-force the discrete logarithm.
+
+However, the exponent identity $(g^b)^a = g^{ba}$ holds in **any monoid** (a set with an associative operation and identity element). Since `ZMod p` under multiplication is a monoid, our algebraic correctness proof is valid regardless of the choice of $g$.
 
 ---
 
@@ -1010,11 +995,8 @@ Note: We work in `ZMod p` (all residues mod $p$) rather than $\mathbb{Z}_p^*$ (t
 theorem dh_three_party (params : DHParams) (a b c : Nat) :
     ((params.g ^ a) ^ b) ^ c
     = ((params.g ^ a) ^ c) ^ b := by
-  rw [← pow_mul, ← pow_mul, ← pow_mul, ← pow_mul]
-  ring_nf
-```
+  rw [← pow_mul, ← pow_mul, ← pow_mul, ← pow_mul]; ring_nf
 
-```lean
 -- Secret 0 gives trivial key (g^0 = 1)
 theorem dh_zero_secret (params : DHParams)
     (their_pub : ZMod params.p) :
@@ -1022,7 +1004,7 @@ theorem dh_zero_secret (params : DHParams)
   simp [dh_shared_secret]
 ```
 
-*Requires Mathlib &mdash; [set up locally](https://leanprover-community.github.io/get_started.html).*
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Tactic.Ring%0A%0Astructure%20DHParams%20where%0A%20%20p%20%3A%20Nat%0A%20%20hp%20%3A%20Nat.Prime%20p%0A%20%20g%20%3A%20ZMod%20p%0A%0Adef%20dh_shared_secret%20%28params%20%3A%20DHParams%29%0A%20%20%20%20%28my_secret%20%3A%20Nat%29%20%28their_public%20%3A%20ZMod%20params.p%29%0A%20%20%20%20%3A%20ZMod%20params.p%20%3A%3D%0A%20%20their_public%20%5E%20my_secret%0A%0Atheorem%20dh_three_party%20%28params%20%3A%20DHParams%29%20%28a%20b%20c%20%3A%20Nat%29%20%3A%0A%20%20%20%20%28%28params.g%20%5E%20a%29%20%5E%20b%29%20%5E%20c%0A%20%20%20%20%3D%20%28%28params.g%20%5E%20a%29%20%5E%20c%29%20%5E%20b%20%3A%3D%20by%0A%20%20rw%20%5B%E2%86%90%20pow_mul%2C%20%E2%86%90%20pow_mul%2C%20%E2%86%90%20pow_mul%2C%20%E2%86%90%20pow_mul%5D%0A%20%20ring_nf%0A%0Atheorem%20dh_zero_secret%20%28params%20%3A%20DHParams%29%0A%20%20%20%20%28their_pub%20%3A%20ZMod%20params.p%29%20%3A%0A%20%20%20%20dh_shared_secret%20params%200%20their_pub%20%3D%201%20%3A%3D%20by%0A%20%20simp%20%5Bdh_shared_secret%5D)
 
 ---
 
@@ -1048,6 +1030,8 @@ theorem dh_compose (params : DHParams) (a b : Nat)
 
 </div>
 
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Tactic.Ring%0A%0Astructure%20DHParams%20where%0A%20%20p%20%3A%20Nat%0A%20%20hp%20%3A%20Nat.Prime%20p%0A%20%20g%20%3A%20ZMod%20p%0A%0Adef%20dh_shared_secret%20%28params%20%3A%20DHParams%29%0A%20%20%20%20%28my_secret%20%3A%20Nat%29%20%28their_public%20%3A%20ZMod%20params.p%29%0A%20%20%20%20%3A%20ZMod%20params.p%20%3A%3D%0A%20%20their_public%20%5E%20my_secret%0A%0A--%205a.%20Shared%20secret%20with%20yourself%3A%20g%5E%28a%2Aa%29%0Atheorem%20dh_self%20%28params%20%3A%20DHParams%29%20%28a%20%3A%20Nat%29%20%3A%0A%20%20%20%20dh_shared_secret%20params%20a%20%28params.g%20%5E%20a%29%0A%20%20%20%20%3D%20params.g%20%5E%20%28a%20%2A%20a%29%20%3A%3D%20by%0A%20%20sorry%0A%0A--%205b.%20Composing%20exponentiations%0Atheorem%20dh_compose%20%28params%20%3A%20DHParams%29%20%28a%20b%20%3A%20Nat%29%0A%20%20%20%20%28their_pub%20%3A%20ZMod%20params.p%29%20%3A%0A%20%20%20%20%28their_pub%20%5E%20a%29%20%5E%20b%20%3D%20their_pub%20%5E%20%28a%20%2A%20b%29%20%3A%3D%20by%0A%20%20sorry)
+
 ---
 
 # Solution 5
@@ -1067,7 +1051,7 @@ theorem dh_compose (params : DHParams) (a b : Nat)
   rw [← pow_mul]
 ```
 
-*Requires Mathlib &mdash; [set up locally](https://leanprover-community.github.io/get_started.html).*
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Tactic.Ring%0A%0Astructure%20DHParams%20where%0A%20%20p%20%3A%20Nat%0A%20%20hp%20%3A%20Nat.Prime%20p%0A%20%20g%20%3A%20ZMod%20p%0A%0Adef%20dh_shared_secret%20%28params%20%3A%20DHParams%29%0A%20%20%20%20%28my_secret%20%3A%20Nat%29%20%28their_public%20%3A%20ZMod%20params.p%29%0A%20%20%20%20%3A%20ZMod%20params.p%20%3A%3D%0A%20%20their_public%20%5E%20my_secret%0A%0Atheorem%20dh_self%20%28params%20%3A%20DHParams%29%20%28a%20%3A%20Nat%29%20%3A%0A%20%20%20%20dh_shared_secret%20params%20a%20%28params.g%20%5E%20a%29%0A%20%20%20%20%3D%20params.g%20%5E%20%28a%20%2A%20a%29%20%3A%3D%20by%0A%20%20simp%20%5Bdh_shared_secret%5D%0A%20%20rw%20%5B%E2%86%90%20pow_mul%5D%0A%0Atheorem%20dh_compose%20%28params%20%3A%20DHParams%29%20%28a%20b%20%3A%20Nat%29%0A%20%20%20%20%28their_pub%20%3A%20ZMod%20params.p%29%20%3A%0A%20%20%20%20%28their_pub%20%5E%20a%29%20%5E%20b%20%3D%20their_pub%20%5E%20%28a%20%2A%20b%29%20%3A%3D%20by%0A%20%20rw%20%5B%E2%86%90%20pow_mul%5D)
 
 ---
 
@@ -1098,15 +1082,15 @@ These are active areas of formal verification research:
 
 ---
 
-# The Vision: Verified Web3 Stack
+# Where This Workshop Fits in Web3
 
 ```
 ┌──────────────────────────────────────┐
 │     Smart Contract (Solidity/Move)   │
 ├──────────────────────────────────────┤
-│     Formal Spec (Lean 4)             │  ← We are here
+│     Formal Spec (Lean 4)             │  ← Part 1: language & tactics
 ├──────────────────────────────────────┤
-│     Cryptographic Primitives         │  ← We proved these
+│     Cryptographic Primitives         │  ← Part 2: OTP, RSA, DH
 ├──────────────────────────────────────┤
 │     Consensus Protocol               │
 ├──────────────────────────────────────┤
@@ -1114,7 +1098,7 @@ These are active areas of formal verification research:
 └──────────────────────────────────────┘
 ```
 
-Each layer can be formally verified. Lean 4 is the tool to do it.
+In Part 1 we learned the **verification language** (Lean 4 foundations and tactics). In Part 2 we applied it to the **cryptographic primitives layer**, proving correctness of OTP, RSA, and Diffie-Hellman. The same techniques scale upward to verify smart contracts and consensus protocols.
 
 ---
 
@@ -1183,9 +1167,6 @@ Nethermind, "[Formally Verifying Zero-Knowledge Circuits](https://www.nethermind
 # Thank You
 
 ## Questions?
-
-**Christiano Braga** &mdash; Universidade Federal Fluminense
-**Semar Augusto Martins** &mdash; Beneficial AI Foundation
 
 Web3 Experts Brazil &mdash; March 2026
 
