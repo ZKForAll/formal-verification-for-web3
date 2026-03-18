@@ -217,8 +217,13 @@ def double (n : Nat) : Nat := 2 * n
 
 -- A theorem
 theorem double_is_add_self (n : Nat) : double n = n + n := by
-  unfold double
-  omega
+  rewrite [double]
+  -- ⊢ 2 * n = n + n
+  rewrite [Nat.succ_mul]
+  -- ⊢ 1 * n + n = n + n
+  rewrite [Nat.one_mul]
+  -- ⊢ n + n = n + n
+  rfl
 ```
 
 Key idea: **propositions are types, proofs are programs** (Curry-Howard correspondence).
@@ -350,24 +355,6 @@ Lean reduces `2+2` to `4`, then sees `4 = 4`.
 
 ---
 
-# Tactic: `intro`
-
-**When?** Your goal starts with $\forall$ or $\to$. Like saying "let `n` be an arbitrary natural number" or "assume `P` holds."
-
-```lean
-theorem identity_eq : ∀ (n : Nat), n = n := by
-  intro n   -- now n : Nat is in context, goal is n = n
-  rfl
-
-theorem imp_self' (P : Prop) : P → P := by
-  intro h   -- assume P holds as hypothesis h
-  exact h
-```
-
-[Try in Lean 4 Web](https://live.lean-lang.org/#code=theorem%20identity_eq%20%3A%20%E2%88%80%20%28n%20%3A%20Nat%29%2C%20n%20%3D%20n%20%3A%3D%20by%0A%20%20intro%20n%0A%20%20rfl%0A%0Atheorem%20imp_self'%20%28P%20%3A%20Prop%29%20%3A%20P%20%E2%86%92%20P%20%3A%3D%20by%0A%20%20intro%20h%0A%20%20exact%20h)
-
----
-
 # Tactic: `exact` and `assumption`
 
 **When?** You have exactly the proof you need in the context. Like citing a known fact to close an argument.
@@ -386,6 +373,25 @@ theorem trivial_imp (P : Prop) (h : P) : P := by
 
 ---
 
+# Tactic: `intro`
+
+**When?** Your goal starts with $\forall$ or $\to$. Like saying "let `n` be an arbitrary natural number" or "assume `P` holds."
+
+```lean
+theorem identity_eq : ∀ (n : Nat), n = n := by
+  intro n   -- now n : Nat is in context, goal is n = n
+  rfl
+
+theorem imp_self' (P : Prop) : P → P := by
+  intro h   -- assume P holds as hypothesis h
+  exact h
+```
+
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=theorem%20identity_eq%20%3A%20%E2%88%80%20%28n%20%3A%20Nat%29%2C%20n%20%3D%20n%20%3A%3D%20by%0A%20%20intro%20n%0A%20%20rfl%0A%0Atheorem%20imp_self'%20%28P%20%3A%20Prop%29%20%3A%20P%20%E2%86%92%20P%20%3A%3D%20by%0A%20%20intro%20h%0A%20%20exact%20h)
+
+---
+
+
 # Tactic: `simp`
 
 **When?** The goal involves known simplification rules &mdash; like `x + 0 = x`, `l ++ [] = l`. The workhorse tactic that automates routine rewriting.
@@ -401,6 +407,28 @@ theorem arith_example (n : Nat) : n + 0 + 0 = n := by
 You can supply extra lemmas: `simp [my_lemma]`.
 
 [Try in Lean 4 Web](https://live.lean-lang.org/#code=theorem%20list_append_nil%20%28l%20%3A%20List%20%CE%B1%29%20%3A%20l%20%2B%2B%20%5B%5D%20%3D%20l%20%3A%3D%20by%0A%20%20simp%0A%0Atheorem%20arith_example%20%28n%20%3A%20Nat%29%20%3A%20n%20%2B%200%20%2B%200%20%3D%20n%20%3A%3D%20by%0A%20%20simp)
+
+---
+
+# Tactic: `decide`
+
+**When?** The goal is a proposition over a **finite** type that Lean can check by trying all cases. Lean enumerates every possibility and verifies the statement holds for each one.
+
+```lean
+-- Fin 2 has only two elements: 0 and 1
+-- Lean checks both: 0+0=0 ✓, 1+1=0 ✓
+theorem fin2_self_add : ∀ (a : Fin 2), a + a = 0 := by
+  decide
+
+-- Works for any decidable proposition over finite types
+theorem bool_demorgan : ∀ (a b : Bool),
+    (!(a && b)) = (!a || !b) := by
+  decide   -- checks all 4 combinations of true/false
+```
+
+Note: `decide` requires **closed** propositions (no free variables). Use `∀` to quantify.
+
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=--%20Fin%202%20has%20only%20two%20elements%3A%200%20and%201%0Atheorem%20fin2_self_add%20%3A%20%E2%88%80%20%28a%20%3A%20Fin%202%29%2C%20a%20%2B%20a%20%3D%200%20%3A%3D%20by%0A%20%20decide%0A%0Atheorem%20bool_demorgan%20%3A%20%E2%88%80%20%28a%20b%20%3A%20Bool%29%2C%0A%20%20%20%20%28%21%28a%20%26%26%20b%29%29%20%3D%20%28%21a%20%7C%7C%20%21b%29%20%3A%3D%20by%0A%20%20decide)
 
 ---
 
@@ -479,35 +507,16 @@ These appear frequently in Part 2's cryptographic proofs:
 
 ```lean
 def double' (n : Nat) : Nat := 2 * n
+
 theorem double_eq (n : Nat) : double' n = 2 * n := by
   unfold double'  -- goal becomes 2 * n = 2 * n
+
 theorem rw_demo (a b : Nat) (h : a = b) : a + 1 = b + 1 := by
   rw [h]          -- replaces a with b
 ```
 
 [Try in Lean 4 Web](https://live.lean-lang.org/#code=--%20unfold%20expands%20a%20definition%0Adef%20double%20%28n%20%3A%20Nat%29%20%3A%20Nat%20%3A%3D%202%20%2A%20n%0A%0Atheorem%20double_eq%20%28n%20%3A%20Nat%29%20%3A%20double%20n%20%3D%202%20%2A%20n%20%3A%3D%20by%0A%20%20unfold%20double%20%20--%20goal%20becomes%202%20%2A%20n%20%3D%202%20%2A%20n%0A%0A--%20rw%20rewrites%20using%20an%20equality%0Atheorem%20rw_demo%20%28a%20b%20%3A%20Nat%29%20%28h%20%3A%20a%20%3D%20b%29%20%3A%20a%20%2B%201%20%3D%20b%20%2B%201%20%3A%3D%20by%0A%20%20rw%20%5Bh%5D%20%20%20%20%20%20%20%20%20--%20replaces%20a%20with%20b)
 
----
-
-# Tactic: `decide`
-
-**When?** The goal is a proposition over a **finite** type that Lean can check by trying all cases. Lean enumerates every possibility and verifies the statement holds for each one.
-
-```lean
--- Fin 2 has only two elements: 0 and 1
--- Lean checks both: 0+0=0 ✓, 1+1=0 ✓
-theorem fin2_self_add : ∀ (a : Fin 2), a + a = 0 := by
-  decide
-
--- Works for any decidable proposition over finite types
-theorem bool_demorgan : ∀ (a b : Bool),
-    (!(a && b)) = (!a || !b) := by
-  decide   -- checks all 4 combinations of true/false
-```
-
-Note: `decide` requires **closed** propositions (no free variables). Use `∀` to quantify.
-
-[Try in Lean 4 Web](https://live.lean-lang.org/#code=--%20Fin%202%20has%20only%20two%20elements%3A%200%20and%201%0Atheorem%20fin2_self_add%20%3A%20%E2%88%80%20%28a%20%3A%20Fin%202%29%2C%20a%20%2B%20a%20%3D%200%20%3A%3D%20by%0A%20%20decide%0A%0Atheorem%20bool_demorgan%20%3A%20%E2%88%80%20%28a%20b%20%3A%20Bool%29%2C%0A%20%20%20%20%28%21%28a%20%26%26%20b%29%29%20%3D%20%28%21a%20%7C%7C%20%21b%29%20%3A%3D%20by%0A%20%20decide)
 
 ---
 
@@ -1049,6 +1058,27 @@ theorem dh_compose (params : DHParams) (a b : Nat)
     (their_pub : ZMod params.p) :
     (their_pub ^ a) ^ b = their_pub ^ (a * b) := by
   rw [← pow_mul]
+```
+
+[Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Tactic.Ring%0A%0Astructure%20DHParams%20where%0A%20%20p%20%3A%20Nat%0A%20%20hp%20%3A%20Nat.Prime%20p%0A%20%20g%20%3A%20ZMod%20p%0A%0Adef%20dh_shared_secret%20%28params%20%3A%20DHParams%29%0A%20%20%20%20%28my_secret%20%3A%20Nat%29%20%28their_public%20%3A%20ZMod%20params.p%29%0A%20%20%20%20%3A%20ZMod%20params.p%20%3A%3D%0A%20%20their_public%20%5E%20my_secret%0A%0Atheorem%20dh_self%20%28params%20%3A%20DHParams%29%20%28a%20%3A%20Nat%29%20%3A%0A%20%20%20%20dh_shared_secret%20params%20a%20%28params.g%20%5E%20a%29%0A%20%20%20%20%3D%20params.g%20%5E%20%28a%20%2A%20a%29%20%3A%3D%20by%0A%20%20simp%20%5Bdh_shared_secret%5D%0A%20%20rw%20%5B%E2%86%90%20pow_mul%5D%0A%0Atheorem%20dh_compose%20%28params%20%3A%20DHParams%29%20%28a%20b%20%3A%20Nat%29%0A%20%20%20%20%28their_pub%20%3A%20ZMod%20params.p%29%20%3A%0A%20%20%20%20%28their_pub%20%5E%20a%29%20%5E%20b%20%3D%20their_pub%20%5E%20%28a%20%2A%20b%29%20%3A%3D%20by%0A%20%20rw%20%5B%E2%86%90%20pow_mul%5D)
+
+---
+
+# Bonus: ? operator
+
+```lean
+theorem dh_self (params : DHParams) (a : Nat) :
+    dh_shared_secret params a (params.g ^ a)
+    = params.g ^ (a * a) := by
+  simp only [dh_shared_secret]
+  -- try this: rw?
+  rw [pow_mul]
+
+theorem dh_compose (params : DHParams) (a b : Nat)
+    (their_pub : ZMod params.p) :
+    (their_pub ^ a) ^ b = their_pub ^ (a * b) := by
+      /- try this: apply? -/
+      exact Eq.symm (pow_mul their_pub a b)
 ```
 
 [Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Data.ZMod.Basic%0Aimport%20Mathlib.Tactic.Ring%0A%0Astructure%20DHParams%20where%0A%20%20p%20%3A%20Nat%0A%20%20hp%20%3A%20Nat.Prime%20p%0A%20%20g%20%3A%20ZMod%20p%0A%0Adef%20dh_shared_secret%20%28params%20%3A%20DHParams%29%0A%20%20%20%20%28my_secret%20%3A%20Nat%29%20%28their_public%20%3A%20ZMod%20params.p%29%0A%20%20%20%20%3A%20ZMod%20params.p%20%3A%3D%0A%20%20their_public%20%5E%20my_secret%0A%0Atheorem%20dh_self%20%28params%20%3A%20DHParams%29%20%28a%20%3A%20Nat%29%20%3A%0A%20%20%20%20dh_shared_secret%20params%20a%20%28params.g%20%5E%20a%29%0A%20%20%20%20%3D%20params.g%20%5E%20%28a%20%2A%20a%29%20%3A%3D%20by%0A%20%20simp%20%5Bdh_shared_secret%5D%0A%20%20rw%20%5B%E2%86%90%20pow_mul%5D%0A%0Atheorem%20dh_compose%20%28params%20%3A%20DHParams%29%20%28a%20b%20%3A%20Nat%29%0A%20%20%20%20%28their_pub%20%3A%20ZMod%20params.p%29%20%3A%0A%20%20%20%20%28their_pub%20%5E%20a%29%20%5E%20b%20%3D%20their_pub%20%5E%20%28a%20%2A%20b%29%20%3A%3D%20by%0A%20%20rw%20%5B%E2%86%90%20pow_mul%5D)

@@ -22,10 +22,19 @@ Exercise solutions are provided as comments below each exercise.
 -- A program
 def double (n : Nat) : Nat := 2 * n
 
+#eval double 5
+
 -- A theorem
 theorem double_is_add_self (n : Nat) : double n = n + n := by
-  unfold double
-  omega
+  -- ⊢ double n = n + n
+  rewrite [double]
+  -- ⊢ 2 * n = n + n
+  rewrite [Nat.succ_mul]
+  -- ⊢ 1 * n + n = n + n
+  rewrite [Nat.one_mul]
+  -- ⊢ n + n = n + n
+  rfl
+  /- rw [double, Nat.succ_mul, Nat.one_mul] -/
 
 -- ---------------------------------------------------------------------------
 -- Anatomy of a Lean Proof
@@ -33,7 +42,7 @@ theorem double_is_add_self (n : Nat) : double n = n + n := by
 
 -- Primed to avoid clash with Mathlib's Nat.succ_pos
 theorem succ_pos' (n : Nat) : 0 < n + 1 := by
-  exact Nat.succ_pos n
+  exact Nat.zero_lt_succ n
 
 -- ---------------------------------------------------------------------------
 -- Basic Types and Terms
@@ -60,9 +69,6 @@ abbrev MyType := Nat
 -- What Are Tactics?
 -- ---------------------------------------------------------------------------
 
-theorem example_proof (P Q : Prop) (hp : P) (hpq : P → Q) : Q := by
-  exact hpq hp
-
 -- ---------------------------------------------------------------------------
 -- Tactic: rfl
 -- ---------------------------------------------------------------------------
@@ -72,6 +78,21 @@ theorem two_plus_two : 2 + 2 = 4 := by
 
 theorem bool_and_true : true && true = true := by
   rfl
+
+
+-- ---------------------------------------------------------------------------
+-- Tactic: exact and assumption
+-- ---------------------------------------------------------------------------
+
+theorem example_proof (P Q : Prop) (hp : P) (hpq : P → Q) : Q := by
+  exact hpq hp
+
+-- Primed to avoid clash with Mathlib's And.intro
+theorem and_intro' (P Q : Prop) (hp : P) (hq : Q) : P ∧ Q := by
+  exact ⟨hp, hq⟩
+
+theorem trivial_imp (P : Prop) (h : P) : P := by
+  assumption
 
 -- ---------------------------------------------------------------------------
 -- Tactic: intro
@@ -86,16 +107,29 @@ theorem imp_self' (P : Prop) : P → P := by
   intro h
   exact h
 
+
 -- ---------------------------------------------------------------------------
--- Tactic: exact and assumption
+-- Tactics: rewrite / rw
 -- ---------------------------------------------------------------------------
 
--- Primed to avoid clash with Mathlib's And.intro
-theorem and_intro' (P Q : Prop) (hp : P) (hq : Q) : P ∧ Q := by
-  exact ⟨hp, hq⟩
+-- remember: def add_one (n : Nat) : Nat := n + 1
 
-theorem trivial_imp (P : Prop) (h : P) : P := by
-  assumption
+theorem add_one_trivial (n : Nat) : add_one n = n + 1 := by
+  rewrite [add_one]
+  -- ⊢ n + 1 = n + 1
+  rfl
+
+theorem double_is_add_self' (n : Nat) : double n = n + n := by
+  rw [double, Nat.succ_mul, Nat.one_mul]
+
+-- ---------------------------------------------------------------------------
+-- Tactic: apply
+-- ---------------------------------------------------------------------------
+
+theorem p_and_b (P Q : Prop) (h₁ : P) (h₂ : Q) : P ∧ Q := by
+  apply And.intro
+  · apply h₁
+  · apply h₂
 
 -- ---------------------------------------------------------------------------
 -- Tactic: simp
@@ -106,6 +140,20 @@ theorem list_append_nil (l : List α) : l ++ [] = l := by
 
 theorem arith_example (n : Nat) : n + 0 + 0 = n := by
   simp
+
+theorem double_is_add_self'' (n : Nat) : double n = n + n := by
+  simp [double, Nat.succ_mul]
+
+-- ---------------------------------------------------------------------------
+-- Tactic: decide
+-- ---------------------------------------------------------------------------
+
+theorem fin2_self_add : ∀ (a : Fin 2), a + a = 0 := by
+  decide
+
+theorem bool_demorgan : ∀ (a b : Bool),
+    (!(a && b)) = (!a || !b) := by
+  decide
 
 -- ---------------------------------------------------------------------------
 -- Tactic: omega
@@ -141,16 +189,6 @@ theorem have_demo (a b c : Nat)
          _ = c := h2
   exact h3
 
--- ---------------------------------------------------------------------------
--- Tactic: decide
--- ---------------------------------------------------------------------------
-
-theorem fin2_self_add : ∀ (a : Fin 2), a + a = 0 := by
-  decide
-
-theorem bool_demorgan : ∀ (a b : Bool),
-    (!(a && b)) = (!a || !b) := by
-  decide
 
 -- ---------------------------------------------------------------------------
 -- Exercise 1: Logic Warmup
@@ -179,7 +217,7 @@ theorem exercise_arith (n : Nat) : n + n = 2 * n := by
   sorry
 
 -- Solution 1c:
---   omega
+  /- rw [Nat.succ_mul, Nat.one_mul] -/
 
 
 -- ============================================================================
@@ -209,7 +247,7 @@ theorem otp_correct (key msg : Vector Bit n) :
     otp_decrypt key (otp_encrypt key msg) = msg := by
   unfold otp_encrypt otp_decrypt
   ext i
-  simp [Vector.zipWith]
+  simp only [Vector.getElem_zipWith]
   -- Goal: key[i] + (key[i] + msg[i]) = msg[i]
   -- By associativity: (key[i] + key[i]) + msg[i]
   -- By self-inverse:  0 + msg[i] = msg[i]
@@ -370,24 +408,20 @@ theorem dh_zero_secret (params : DHParams)
   simp [dh_shared_secret]
 
 -- ---------------------------------------------------------------------------
--- Exercise 5: Diffie-Hellman
+-- Bonus:
 -- ---------------------------------------------------------------------------
 
 -- 5a. Shared secret with yourself: g^(a*a)
 theorem dh_self (params : DHParams) (a : Nat) :
     dh_shared_secret params a (params.g ^ a)
     = params.g ^ (a * a) := by
-  sorry
-
--- Solution 5a:
---   simp [dh_shared_secret]
---   rw [← pow_mul]
+  simp only [dh_shared_secret]
+  -- try this: rw?
+  rw [pow_mul]
 
 -- 5b. Composing exponentiations
 theorem dh_compose (params : DHParams) (a b : Nat)
     (their_pub : ZMod params.p) :
     (their_pub ^ a) ^ b = their_pub ^ (a * b) := by
-  sorry
-
--- Solution 5b:
---   rw [← pow_mul]
+      /- try this: apply? -/
+      exact Eq.symm (pow_mul their_pub a b)
