@@ -43,11 +43,81 @@ style: |
   a {
     font-size: 18px;
   }
+  section.title {
+    background: linear-gradient(135deg, #0984e3 0%, #2d3436 100%);
+    color: #ffffff;
+    justify-content: flex-start;
+    padding: 80px 80px;
+  }
+  section.title h1 {
+    color: #ffffff;
+    font-size: 64px;
+    line-height: 1.1;
+    margin: 0 0 0.4em 0;
+    border-bottom: 4px solid #74b9ff;
+    padding-bottom: 0.3em;
+    max-width: 900px;
+  }
+  section.title .venue {
+    font-size: 22px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: #74b9ff;
+    margin-bottom: 1.5em;
+  }
+  section.title .authors {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-top: 2em;
+    max-width: 900px;
+  }
+  section.title .author-name {
+    font-size: 28px;
+    font-weight: 600;
+    color: #ffffff;
+  }
+  section.title .author-affil {
+    font-size: 18px;
+    color: #b2bec3;
+    margin-top: 0.2em;
+  }
+  section.title .date {
+    position: absolute;
+    bottom: 60px;
+    left: 80px;
+    font-size: 20px;
+    color: #74b9ff;
+    letter-spacing: 0.1em;
+  }
+  section.title footer,
+  section.title::after {
+    color: #74b9ff;
+  }
 ---
+
+<!-- _class: title -->
+<!-- _paginate: false -->
+
+<div class="venue">Web3 Experts Brazil</div>
 
 # Formal Verification for Web3
 
-**Web3 Experts Brazil**
+<div class="authors">
+
+<div>
+<div class="author-name">Christiano Braga</div>
+<div class="author-affil">ZKForall<br/>Universidade Federal Fluminense</div>
+</div>
+
+<div>
+<div class="author-name">Semar Martins</div>
+<div class="author-affil">ZKForall</div>
+</div>
+
+</div>
+
+<div class="date">June 27, 2026</div>
 
 ---
 
