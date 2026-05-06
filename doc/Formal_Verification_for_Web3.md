@@ -476,6 +476,8 @@ theorem arith_example (n : Nat) : n + 0 + 0 = n := by
 
 You can supply extra lemmas: `simp [my_lemma]`.
 
+**Variant `simp only [lemmas]`** &mdash; rewrite using **only** the listed lemmas (no default simp set). Predictable but more verbose; preferred when you want to control which rewrites fire (e.g., `simp only [dh_shared_secret]` just unfolds the definition).
+
 [Try in Lean 4 Web](https://live.lean-lang.org/#code=theorem%20list_append_nil%20%28l%20%3A%20List%20%CE%B1%29%20%3A%20l%20%2B%2B%20%5B%5D%20%3D%20l%20%3A%3D%20by%0A%20%20simp%0A%0Atheorem%20arith_example%20%28n%20%3A%20Nat%29%20%3A%20n%20%2B%200%20%2B%200%20%3D%20n%20%3A%3D%20by%0A%20%20simp)
 
 ---
@@ -537,6 +539,8 @@ theorem ring_demo2 (x : Int) :
   ring
 ```
 
+**Variant `ring_nf`** &mdash; *normalizes* the goal to a canonical polynomial form without insisting it be a closed equality. Use it as a step in a longer proof, e.g. `rw [← pow_mul, ← pow_mul]; ring_nf` to massage exponents into the same shape.
+
 [Try in Lean 4 Web](https://live.lean-lang.org/#code=import%20Mathlib.Tactic.Ring%0A%0Atheorem%20ring_demo1%20%28a%20b%20%3A%20Nat%29%20%3A%0A%20%20%20%20%28a%20%2B%20b%29%20%2A%20%28a%20%2B%20b%29%20%3D%20a%2Aa%20%2B%202%2Aa%2Ab%20%2B%20b%2Ab%20%3A%3D%20by%0A%20%20ring%0A%0Atheorem%20ring_demo2%20%28x%20%3A%20Int%29%20%3A%0A%20%20%20%20%28x%20%2B%201%29%20%2A%20%28x%20-%201%29%20%3D%20x%5E2%20-%201%20%3A%3D%20by%0A%20%20ring)
 
 ---
@@ -569,7 +573,8 @@ These appear frequently in Part 2's cryptographic proofs:
 | Tactic | Purpose | Example use |
 |---|---|---|
 | `unfold f` | Expand definition `f` in the goal | `unfold otp_encrypt` |
-| `rw [h]` | Rewrite using `h : a = b` (left to right) | `rw [pow_mul]` |
+| `rewrite [h]` | Rewrite using `h : a = b`; **leaves** the resulting goal open | step-by-step proofs |
+| `rw [h]` | Same as `rewrite`, then tries `rfl` to close the goal | `rw [pow_mul]` |
 | `rw [← h]` | Rewrite in reverse direction | `rw [← add_assoc]` |
 | `ext i` | Prove equality component-wise | Two `Vector`s equal element-wise |
 
@@ -599,13 +604,13 @@ theorem rw_demo (a b : Nat) (h : a = b) : a + 1 = b + 1 := by
 | `rfl` | Prove `a = a` (definitional equality) | Warm-up |
 | `intro` / `exact` | Move quantifiers into context / provide proof term | Warm-up |
 | `simp` | Simplification with a lemma database | OTP, DH |
+| `decide` | Brute-force decidable propositions | OTP |
 | `omega` | Decide linear arithmetic ($\mathbb{N}$, $\mathbb{Z}$) | RSA |
 | `ring` / `ring_nf` | Prove ring equalities / normalize | OTP, RSA, DH |
 | `have` / `calc` | Introduce intermediate steps | OTP |
 | `unfold` | Expand a definition in the goal | OTP, RSA |
 | `rw` / `rw [←]` | Rewrite with an equality | RSA, DH |
 | `ext` | Prove equality component-wise | OTP |
-| `decide` | Brute-force decidable propositions | OTP |
 
 </div>
 
@@ -1280,15 +1285,16 @@ Web3 Experts Brazil &mdash; March 2026
 # Install elan (Lean version manager)
 curl https://elan.lean-lang.org/install.sh -sSf | sh
 
-# Create a new project
-lake new my_crypto_proofs
+# Create a Mathlib-enabled project
+lake new my_crypto_proofs math
+cd my_crypto_proofs
 
-# Add Mathlib dependency (in lakefile.lean)
-# require mathlib from git
-#   "https://github.com/leanprover-community/mathlib4"
-
-# Build
+# Download precompiled Mathlib (otherwise lake build
+# recompiles Mathlib from source — hours)
+lake exe cache get
 lake build
 ```
 
-**Recommended editor:** VS Code with the `lean4` extension.
+The `math` template wires up every Mathlib module the slides import.
+
+**No local install?** Each code block has a *Try in Lean 4 Web* link &mdash; <https://live.lean-lang.org/>. **Editor:** VS Code with the `lean4` extension.
